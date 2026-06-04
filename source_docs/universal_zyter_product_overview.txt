@@ -1,0 +1,122 @@
+ZYTER|TRUCARE — PRODUCT OVERVIEW (placeholder — replace with real docs)
+Source: zyter.ai (public) + project proposal
+Last updated: May 2026
+
+=== SYMPHONY — AI Orchestration Control Plane ===
+
+Symphony is Zyter's AI orchestration layer. It does not execute tasks directly;
+it coordinates agents, systems, and humans across complex workflows.
+
+Key specs:
+- 42 governed meta-agents
+- Model-agnostic (Claude, OpenAI, Gemini, open-source)
+- 8 weeks to production (reference: CMS WISeR implementation)
+- 80-90% auto-approval rates for prior authorization workflows
+- Full audit trail on every decision
+- Learning mechanism: prompt tuning + model selection testing (not weight fine-tuning)
+- Human-in-the-loop: confidence thresholds adjustable; decreases over time as trust builds
+
+Symphony Architecture (4 layers):
+1. Experience & Outcomes layer — user-facing interfaces and outcome measurement
+2. Control Plane — orchestration, governance, audit
+3. Agentic Runtime — agent execution and tool use
+4. Enterprise Integration — connectors to EHR, payer systems, databases
+
+=== PRAXIS — Workflow & Outcomes Engine ===
+
+Praxis is Zyter's domain-specific workflow execution engine. It implements the
+SENSE → THINK → ACT → LEARN loop for clinical and operational tasks.
+
+Current Praxis modules (all external-facing, sold to payers/providers):
+- Utilization Management (UM): Prior authorization, clinical guideline matching
+- Care Management (CM): Post-discharge support, patient coordination
+- Claims Processing
+- Clinical Encounter support
+- PA Coordination
+
+Key differentiators:
+- GraphRAG retrieval over Zyter System Graph (not flat semantic search)
+- MCG / InterQual clinical guideline integration
+- LoRA fine-tuned adapters per clinical task
+- RLHF signal from embedded domain experts
+- Data flywheel: every workflow outcome becomes training data
+
+=== TRUCARE PHM — Population Health Management ===
+
+TruCare is Zyter's population health management platform.
+Serves state Medicaid programs, Medicare Advantage plans, multi-national carriers.
+
+=== SMARTSTART — Deployment Accelerator ===
+
+SmartStart is Zyter's pre-built workflow template library for external clients.
+Clients use SmartStart templates to go live faster without building from scratch.
+Internal equivalent: none yet (this project builds it).
+
+=== ZYTER SYSTEM GRAPH ===
+
+Proprietary knowledge graph analogous to Palantir Foundry.
+Maps entities (patients, procedures, guidelines, decisions) and their relationships.
+Every workflow execution writes back to the graph — creates persistent episodic memory.
+Ontology updates via dynamic schema mutation (not retraining).
+
+=== COMPETITIVE LANDSCAPE ===
+
+Cohere Health:
+- $240M ARR
+- Focus: Prior authorization automation (UM space)
+- Wins: 70% faster access to care, 85% real-time auto-approval, 94% physician satisfaction
+- Strategy: Sell hard outcomes, not platform breadth
+- Where Zyter competes: Symphony's governance layer + audit trail; Praxis UM module
+
+Freed:
+- $30M, 26,000 clinicians
+- Focus: Clinical encounter documentation (scribe AI)
+- Trained by real clinicians
+- Competes with: Zyter Clinical Encounter Praxis module
+
+Ambience Healthcare:
+- Clinical encounter AI
+- Strong in ambient documentation
+- Competes with: Zyter Clinical Encounter Praxis module
+
+Klue / Crayon:
+- Competitive intelligence platforms
+- Continuous monitoring of competitor websites, filings, pricing
+- Competes with: Zyter internal CI agent (what we are building)
+
+Glean:
+- Enterprise knowledge search (AI-powered)
+- Strong in internal knowledge retrieval
+- Competes with: Zyter internal Agent Assist / knowledge base agent
+
+=== INTERNAL USE CASES (Sprint 1 focus) ===
+
+RFP & Discovery Prep (Sales Engineering):
+- Pain: Writing RFP responses manually; using personal Claude but output drifts from company
+  standards — wrong stats, off-brand tone
+- Input: Incoming RFP document
+- Output: Draft response with per-section confidence scores; gaps flagged for human review
+- Knowledge needed: Zyter product specs, past RFP responses, Praxis module descriptions
+
+Competitive Intelligence Brief (Sales / GTM):
+- Pain: Scrambling to build battle cards before customer calls
+- Input: Competitor name + deal context
+- Output: Executive Summary | Where We Win | Where We Lose | Recommended Positioning
+- Knowledge needed: Zyter product docs, battle cards, win/loss notes, analyst reports
+
+Agent Assist — Q&A Bot (All teams):
+- Pain: Needing accurate Zyter facts/stats during live customer calls
+- Input: Natural language question about Zyter
+- Output: Grounded answer with source citation
+- Knowledge needed: All Zyter product docs, pricing, case studies, technical specs
+
+=== CLIENT PROFILE ===
+
+Typical Zyter clients:
+- State Medicaid programs
+- Medicare Advantage health plans
+- Multi-national insurance carriers
+- Health systems (hospitals, clinicians)
+
+Organization size: ~300 US-based Zyter employees
+Headquarters: Rockville, Maryland

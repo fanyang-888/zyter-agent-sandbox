@@ -1,0 +1,19 @@
+# RFI/RFP Archive — PLACEHOLDER
+#
+# 等Matt发来真实RFI/RFP数据后，替换此文件：
+#
+# 操作步骤：
+#   1. 把历史RFI/RFP文档放进 source_docs/ 目录
+#   2. 文件名加 rfp_ 前缀（自动进入 rfp_archive collection）
+#      例：rfp_medicare_advantage_2025-11.pdf
+#          rfp_medicaid_responses_2026-01.txt
+#   3. 重新运行：python scripts/setup_kb.py
+#   4. 删除此占位文件
+#
+# 数据格式：.txt / .pdf / .md 均可
+# 命名规则：rfp_<描述>_<YYYY-MM>.<ext>
+#
+# 来源建议（待Matt确认）：
+#   - 过去12个月的RFI问题 + 销售工程师的回复
+#   - 已赢得deal的RFP response（不含客户PII）
+#   - Zyter的标准能力问答表（如有）
