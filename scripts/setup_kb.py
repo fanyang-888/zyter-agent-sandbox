@@ -26,7 +26,10 @@ import hashlib
 from pathlib import Path
 
 from dotenv import load_dotenv
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+try:
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+except ImportError:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
@@ -60,7 +63,7 @@ def collection_for_file(filename: str) -> str:
 def read_file(path: Path) -> str:
     suffix = path.suffix.lower()
 
-    if suffix == ".txt" or suffix == ".md":
+    if suffix in (".txt", ".md"):
         return path.read_text(encoding="utf-8", errors="ignore")
 
     if suffix == ".pdf":
@@ -70,6 +73,45 @@ def read_file(path: Path) -> str:
             return "\n".join(page.extract_text() or "" for page in reader.pages)
         except ImportError:
             print(f"  [SKIP] pypdf not installed, cannot read {path.name}")
+            return ""
+
+    if suffix in (".docx",):
+        try:
+            import zipfile, xml.etree.ElementTree as ET
+            ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+            with zipfile.ZipFile(str(path)) as z:
+                with z.open("word/document.xml") as f:
+                    tree = ET.parse(f)
+            paragraphs = tree.getroot().findall(".//w:p", ns)
+            lines = []
+            for p in paragraphs:
+                text = "".join(r.text or "" for r in p.findall(".//w:t", ns))
+                if text.strip():
+                    lines.append(text)
+            return "\n".join(lines)
+        except Exception as e:
+            print(f"  [SKIP] could not read docx {path.name}: {e}")
+            return ""
+
+    if suffix in (".xlsx", ".xls"):
+        try:
+            import openpyxl
+            wb = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
+            parts = []
+            for sheet_name in wb.sheetnames:
+                ws = wb[sheet_name]
+                parts.append(f"=== Sheet: {sheet_name} ===")
+                for row in ws.iter_rows(values_only=True):
+                    cells = [str(c) if c is not None else "" for c in row]
+                    line = " | ".join(cells).strip(" |")
+                    if line.replace("|", "").strip():
+                        parts.append(line)
+            return "\n".join(parts)
+        except ImportError:
+            print(f"  [SKIP] openpyxl not installed — run: pip install openpyxl")
+            return ""
+        except Exception as e:
+            print(f"  [SKIP] could not read xlsx {path.name}: {e}")
             return ""
 
     print(f"  [SKIP] unsupported file type: {path.name}")
@@ -87,7 +129,11 @@ DOC_TYPE_MAP = {
     "competitor":           "competitor_note",
     "handbook":             "internal_handbook",
     "release_notes":        "release_notes",
+    "release":              "release_notes",
     "training":             "training_doc",
+    "onboarding":           "onboarding_doc",
+    "rrtraining":           "training_doc",
+    "releaseconsideration": "release_notes",
 }
 
 TEAM_MAP = {
@@ -168,7 +214,7 @@ def ingest():
     vectorstores: dict[str, Chroma] = {}
 
     files = list(SOURCE_DOCS_DIR.glob("*"))
-    readable = [f for f in files if f.suffix.lower() in (".txt", ".pdf", ".md")]
+    readable = [f for f in files if f.suffix.lower() in (".txt", ".pdf", ".md", ".docx", ".xlsx")]
 
     if not readable:
         print("No readable files found in source_docs/. Add .txt, .pdf, or .md files.")

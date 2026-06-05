@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zyter Internal Agent Sandbox — Demo</title>
+<style>
+  :root {
+    --blue: #1e6fd9;
+    --blue-dark: #0f4c8a;
+    --teal: #14b8a6;
+    --bg: #f7f9fc;
+    --card: #ffffff;
+    --border: #e3e8ef;
+    --text: #1e293b;
+    --muted: #64748b;
+    --green: #16a34a;
+    --yellow: #d97706;
+    --red: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .layout { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    background: linear-gradient(160deg, var(--blue-dark), var(--blue));
+    color: white;
+    padding: 24px 20px;
+    flex-shrink: 0;
+  }
+  .sidebar h1 { font-size: 18px; margin-bottom: 4px; }
+  .sidebar .sub { font-size: 12px; opacity: 0.8; margin-bottom: 24px; }
+  .nav-item {
+    padding: 12px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.1); }
+  .nav-item.active { background: rgba(255,255,255,0.22); }
+  .sidebar .divider { height: 1px; background: rgba(255,255,255,0.2); margin: 20px 0; }
+  .kb-status { font-size: 12px; opacity: 0.85; }
+  .kb-status .doc { padding: 4px 0; font-family: monospace; font-size: 11px; }
+  .badge-demo {
+    margin-top: 20px; padding: 10px; border-radius: 8px;
+    background: rgba(255,255,255,0.15); font-size: 12px; text-align: center;
+  }
+
+  /* Main */
+  .main { flex: 1; padding: 32px 40px; max-width: 1100px; }
+  .main h2 { font-size: 24px; margin-bottom: 6px; }
+  .main .desc { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+
+  textarea, input[type=text] {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical;
+  }
+  textarea:focus, input:focus { outline: none; border-color: var(--blue); }
+  label { display:block; font-weight:600; font-size:13px; margin-bottom:6px; margin-top:14px; }
+
+  .btn {
+    margin-top: 16px; padding: 11px 24px; background: var(--blue); color: white;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--blue-dark); }
+
+  .results { margin-top: 28px; display: none; }
+  .results.show { display: block; animation: fade 0.4s; }
+  @keyframes fade { from {opacity:0; transform:translateY(8px);} to {opacity:1; transform:none;} }
+
+  .metrics { display: flex; gap: 16px; margin-bottom: 20px; }
+  .metric {
+    flex: 1; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .metric .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .metric .val { font-size: 22px; font-weight: 700; }
+
+  .banner {
+    padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;
+    background: #fef3c7; border: 1px solid #fcd34d; color: #92400e;
+  }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+  }
+  .card h3 { font-size: 16px; margin-bottom: 8px; }
+  .summary-box {
+    background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;
+    padding: 14px 16px; margin-bottom: 20px; font-size: 14px;
+  }
+
+  .section-head { display:flex; align-items:center; gap:8px; cursor:pointer; }
+  .section-head .dot { font-size: 12px; }
+  .section-head .title { font-weight: 600; flex: 1; }
+  .review-tag { font-size: 11px; color: var(--red); font-weight: 700; }
+  .section-body { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .claims { display: flex; gap: 20px; margin-top: 12px; }
+  .claims > div { flex: 1; }
+  .claims h4 { font-size: 12px; margin-bottom: 6px; }
+  .claims .item { font-size: 12px; color: var(--muted); padding: 2px 0; }
+  .conf-cap { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+  .winlose { display: flex; gap: 16px; margin: 16px 0; }
+  .winlose > div { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .winlose h3 { font-size: 14px; margin-bottom: 10px; }
+  .winlose .item { font-size: 13px; padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+  .positioning { background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 14px 16px; font-style: italic; }
+
+  .src-list { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .src-list .src { padding: 3px 0; font-family: monospace; }
+  .stale { color: var(--yellow); font-weight: 600; }
+  .spinner { display:none; margin-top:20px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h1>🏥 Zyter Agent Sandbox</h1>
+    <div class="sub">Sprint 1 prototype — internal use</div>
+
+    <div class="nav-item active" data-agent="rfp" onclick="switchAgent('rfp')">
+      📋 RFI / RFP Assistant
+    </div>
+    <div class="nav-item" data-agent="ci" onclick="switchAgent('ci')">
+      🔍 Competitive Intelligence
+    </div>
+
+    <div class="divider"></div>
+    <div class="kb-status">
+      <strong>Knowledge base</strong>
+      <div class="doc">✅ 5 documents indexed</div>
+      <div class="doc">release_notes_25.1_25.2.xlsx</div>
+      <div class="doc">training_packet_25.1.docx</div>
+      <div class="doc">product_overview.txt</div>
+    </div>
+
+    <div class="badge-demo">📌 Demo mode — mock data<br>(no API keys required)</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- RFP AGENT -->
+    <div id="agent-rfp">
+      <h2>📋 RFI / RFP Assistant</h2>
+      <div class="desc">Paste an incoming RFI or RFP. The agent maps each requirement to Zyter's portfolio, flags coverage gaps, and drafts a grounded response.</div>
+
+      <label>Paste RFI / RFP text</label>
+      <textarea id="rfp-input" rows="8">We are seeking a Care Management platform with the following capabilities:
+1. Automated prior authorization workflow for Medicare Advantage members
+2. Integration with Epic EHR for patient data ingestion
+3. Real-time clinical decision support during care manager workflows
+4. HIPAA-compliant data storage and audit logging
+5. SSO integration with Azure Active Directory
+6. Reporting dashboard for utilization metrics by care manager</textarea>
+
+      <button class="btn" onclick="runRFP()">Generate Draft Response</button>
+      <div class="spinner" id="rfp-spinner">⏳ Retrieving knowledge + drafting response...</div>
+
+      <div class="results" id="rfp-results"></div>
+    </div>
+
+    <!-- CI AGENT -->
+    <div id="agent-ci" style="display:none">
+      <h2>🔍 Competitive Intelligence Brief</h2>
+      <div class="desc">Enter a competitor and optional deal context. The agent retrieves Zyter's battle cards and produces a win/loss brief.</div>
+
+      <label>Competitor name</label>
+      <input type="text" id="ci-name" value="Cohere Health">
+      <label>Deal context (optional)</label>
+      <input type="text" id="ci-context" value="Medicare Advantage plan, 100k members, prior authorization automation RFP">
+
+      <button class="btn" onclick="runCI()">Generate Brief</button>
+      <div class="spinner" id="ci-spinner">⏳ Retrieving intel + drafting brief...</div>
+
+      <div class="results" id="ci-results"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Mock data (mirrors demo.py) ───────────────────────────────
+const RFP_RESULT = {
+  eval: { groundedness: "87%", risk: "low", stale: 1 },
+  summary: "This RFP seeks a care management platform with prior authorization automation, EHR integration, and real-time clinical decision support for a Medicare Advantage plan. Zyter's Symphony + Praxis UM stack covers the core workflow requirements; Epic integration and the SSO requirement need SE confirmation before committing.",
+  staleSrc: "rfp_past_responses_2024.pdf",
+  sections: [
+    { title: "Automated prior authorization workflow", conf: "high", review: false,
+      body: "Zyter Praxis UM automates prior authorization end-to-end using the SENSE→THINK→ACT loop. Clinical charts are matched against MCG/InterQual guidelines via GraphRAG retrieval, producing an approval recommendation with an audit trail. Reference: CMS WISeR deployment achieved 80–90% auto-approval rates within 8 weeks.",
+      grounded: ["80–90% auto-approval", "8 weeks to production", "MCG/InterQual"], unverified: [] },
+    { title: "Epic EHR integration", conf: "medium", review: true,
+      body: "Symphony's Enterprise Integration layer supports HL7 FHIR-based connectors. Confirm with SE whether a certified Epic connector is available in the current release or requires custom integration work.",
+      grounded: ["FHIR-based connectors"], unverified: ["certified Epic connector availability"] },
+    { title: "Real-time clinical decision support", conf: "high", review: false,
+      body: "Praxis surfaces decision support at each workflow node via the ReAct reasoning loop. Care managers see inline recommendations with confidence scores. Human-in-the-loop checkpoints are configurable — low-confidence outputs are held for review.",
+      grounded: ["ReAct reasoning loop", "human-in-the-loop checkpoints"], unverified: [] },
+    { title: "SSO with Azure Active Directory", conf: "low", review: true,
+      body: "Pending confirmation of identity provider config. Zyter's sandbox uses Cognito with OIDC. Azure AD federation via SAML/OIDC is technically feasible but needs IT/infra confirmation before committing.",
+      grounded: ["Cognito with OIDC"], unverified: ["Azure AD SAML federation in current release"] },
+    { title: "Utilization reporting dashboard", conf: "medium", review: false,
+      body: "The Adoption Measurement Dashboard tracks agent invocations, task completion rates, and time savings by care manager. Export to CSV/PDF supported. Custom KPIs configurable at implementation.",
+      grounded: ["agent invocations", "time savings tracking"], unverified: ["CSV/PDF export"] },
+  ],
+  gaps: ["HIPAA BAA countersigning process — requires Legal review, not a product feature"],
+  sources: [
+    { file: "universal_zyter_product_overview.txt", type: "product_spec", fresh: "2026-05", stale: false },
+    { file: "rfp_past_responses_2024.pdf", type: "rfp_response", fresh: "2024-11", stale: true },
+  ]
+};
+
+const CI_RESULT = {
+  competitor: "Cohere Health", conf: "high",
+  summary: "Cohere Health dominates prior authorization automation with $240M ARR and hard outcome metrics (85% auto-approval, 70% faster access to care). Zyter competes on governance depth and platform breadth — Symphony covers the full orchestration layer beyond just PA, while Cohere is a point solution. Win by leading with audit trail and multi-workflow coverage.",
+  win: [
+    "Full orchestration layer: Symphony coordinates agents, humans, systems — Cohere is PA-only",
+    "Governance + audit trail: every Symphony decision is logged and explainable",
+    "Configurable human-in-the-loop: thresholds adjustable per workflow",
+    "Platform expansion: Praxis UM + CM + Clinical Encounter on one platform",
+  ],
+  lose: [
+    "Brand recognition in PA automation: Cohere has $240M ARR and named outcomes",
+    "Speed-to-value perception: Cohere's '85% auto-approval' is a simpler pitch",
+    "Physician UX: Cohere has 94% satisfaction; Zyter has limited published metrics",
+  ],
+  positioning: "Cohere solves one workflow. Symphony runs your entire operation — and every workflow you add makes the system smarter.",
+  sources: [
+    { file: "universal_zyter_product_overview.txt", type: "product_spec", fresh: "2026-05", stale: false },
+    { file: "ci_competitor_notes.txt", type: "competitor_note", fresh: "2026-05", stale: false },
+  ]
+};
+
+const dot = c => ({high:"🟢",medium:"🟡",low:"🔴"}[c] || "⚪");
+
+function switchAgent(a) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.agent === a));
+  document.getElementById('agent-rfp').style.display = a === 'rfp' ? 'block' : 'none';
+  document.getElementById('agent-ci').style.display  = a === 'ci'  ? 'block' : 'none';
+}
+
+function runRFP() {
+  const sp = document.getElementById('rfp-spinner'), res = document.getElementById('rfp-results');
+  res.classList.remove('show'); sp.style.display = 'block';
+  setTimeout(() => {
+    sp.style.display = 'none';
+    const r = RFP_RESULT;
+    let html = `
+      <div class="metrics">
+        <div class="metric"><div class="label">Groundedness</div><div class="val">${r.eval.groundedness}</div></div>
+        <div class="metric"><div class="label">Hallucination risk</div><div class="val">🟢 ${r.eval.risk.toUpperCase()}</div></div>
+        <div class="metric"><div class="label">Stale sources</div><div class="val">${r.eval.stale}</div></div>
+      </div>
+      <div class="banner">⚠️ Stale knowledge detected: <code>${r.staleSrc}</code> — verify stats before sending to client</div>
+      <h3 style="margin-bottom:8px">Summary</h3>
+      <div class="summary-box">${r.summary}</div>`;
+    if (r.gaps.length) {
+      html += `<div class="card"><h3>⚠️ ${r.gaps.length} gap(s) — no Zyter coverage</h3>`;
+      r.gaps.forEach(g => html += `<div style="font-size:13px;color:var(--muted)">• ${g}</div>`);
+      html += `</div>`;
+    }
+    html += `<h3 style="margin:18px 0 10px">Section-by-Section Draft</h3>`;
+    r.sections.forEach((s,i) => {
+      const tag = s.review ? `<span class="review-tag">⚠️ REVIEW REQUIRED</span>` : '';
+      let claims = '';
+      if (s.grounded.length || s.unverified.length) {
+        claims = `<div class="claims">
+          <div>${s.grounded.length?'<h4>✅ Grounded claims</h4>'+s.grounded.map(c=>`<div class="item">• ${c}</div>`).join(''):''}</div>
+          <div>${s.unverified.length?'<h4>⚠️ Unverified — check before sending</h4>'+s.unverified.map(c=>`<div class="item">• ${c}</div>`).join(''):''}</div>
+        </div>`;
+      }
+      html += `<div class="card">
+        <div class="section-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+          <span class="dot">${dot(s.conf)}</span><span class="title">${s.title}</span>${tag}
+        </div>
+        <div class="section-body" style="display:${i<2?'block':'none'}">
+          <div style="font-size:14px">${s.body}</div>
+          ${claims}
+          <div class="conf-cap">Confidence: ${s.conf.toUpperCase()}</div>
+        </div>
+      </div>`;
+    });
+    html += `<div class="card"><h3>📚 Knowledge sources used</h3><div class="src-list">`;
+    r.sources.forEach(s => {
+      const st = s.stale ? ' <span class="stale">⚠️ STALE</span>' : ' ✅';
+      html += `<div class="src">${s.file} — ${s.type} | updated ${s.fresh}${st}</div>`;
+    });
+    html += `</div></div>`;
+    res.innerHTML = html; res.classList.add('show');
+  }, 1400);
+}
+
+function runCI() {
+  const sp = document.getElementById('ci-spinner'), res = document.getElementById('ci-results');
+  res.classList.remove('show'); sp.style.display = 'block';
+  setTimeout(() => {
+    sp.style.display = 'none';
+    const r = CI_RESULT;
+    let html = `
+      <div class="metrics">
+        <div class="metric"><div class="label">Confidence</div><div class="val">🟢 ${r.conf.toUpperCase()}</div></div>
+      </div>
+      <h3 style="margin-bottom:8px">Executive Summary</h3>
+      <div class="summary-box">${r.summary}</div>
+      <div class="winlose">
+        <div><h3>✅ Where We Win</h3>${r.win.map(w=>`<div class="item">${w}</div>`).join('')}</div>
+        <div><h3>❌ Where We Lose</h3>${r.lose.map(l=>`<div class="item">${l}</div>`).join('')}</div>
+      </div>
+      <h3 style="margin:18px 0 8px">💬 Recommended Positioning</h3>
+      <div class="positioning">"${r.positioning}"</div>
+      <div class="card" style="margin-top:16px"><h3>📚 Knowledge sources used</h3><div class="src-list">`;
+    r.sources.forEach(s => html += `<div class="src">${s.file} — ${s.type} | updated ${s.fresh} ✅</div>`);
+    html += `</div></div>`;
+    res.innerHTML = html; res.classList.add('show');
+  }, 1400);
+}
+</script>
+</body>
+</html>

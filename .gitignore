@@ -8,3 +8,10 @@ user_data/
 *.log
 .venv/
 venv/
+
+# Real Zyter source documents — NEVER commit (sensitive, SharePoint-only)
+# Only .txt / .md placeholders are allowed in source_docs/
+source_docs/*.xlsx
+source_docs/*.docx
+source_docs/*.pdf
+source_docs/*.pptx
