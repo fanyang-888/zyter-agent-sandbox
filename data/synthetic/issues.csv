@@ -1,0 +1,16 @@
+cp_id,description,impacted_versions,resolved_version,platform
+CP-100001,Care plan auto-save fails when session times out during documentation,24.2 25.1,25.1,TruCare Care Management
+CP-100002,Member search returns duplicate records for members with multiple active cases,24.2,25.1,TruCare Core
+CP-100003,Prior authorization decision table ignores LOU change reason column,24.2 25.1,25.2,TruCare Utilization Management
+CP-100004,Distributed correspondence triggers wrong template on program re-enrollment,25.1,25.2,TruCare Care Management
+CP-100005,Manual task due-date time displays in UTC instead of user timezone,24.2 25.1,25.2,TruCare Core
+CP-100006,Assessment split-screen view does not load clinical data for HCS members,25.1,,TruCare Home and Community Services
+CP-100007,MCG CareWebQI certification check fails intermittently on concurrent reviews,24.2,25.1,TruCare Utilization Management
+CP-100008,Personal Medication List letter omits reviewed medications added same day,25.1,25.2,TruCare Care Management
+CP-100009,Birth event relationship dropdown not configurable per client,24.2 25.1 25.2,,TruCare Core
+CP-100010,Case closure alert dialog can be dismissed without acknowledging warning,24.2,25.1,TruCare Core
+CP-100011,Find Help referral note not returned to case after navigation,25.1,25.2,TruCare Care Management
+CP-100012,Temporary member record edit allows SSN change without audit log entry,25.1 25.2,,TruCare Core
+CP-100013,Workforce Management shift assignment ignores timezone on overnight shifts,24.2,,TruCare Workforce Management
+CP-100014,Special instructions pop-up does not appear when entering via task list,25.2,,TruCare Core
+CP-100015,Purge inactive members removes members with future-dated eligibility,25.1,25.1,TruCare Core

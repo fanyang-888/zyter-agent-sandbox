@@ -26,7 +26,10 @@ from typing import Optional
 from dotenv import load_dotenv
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
-from langchain.schema import Document
+try:
+    from langchain_core.documents import Document
+except ImportError:
+    from langchain.schema import Document
 
 load_dotenv()
 

@@ -15,3 +15,7 @@ source_docs/*.xlsx
 source_docs/*.docx
 source_docs/*.pdf
 source_docs/*.pptx
+
+# Runtime artifacts (LangGraph checkpoints, logs)
+*.sqlite
+*_log.jsonl
