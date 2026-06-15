@@ -42,8 +42,10 @@ def search_issues(query: str, versions: list[str], status: str = None) -> list[d
 
     status: "known" | "resolved" | None (both). Version filter is hard.
     """
+    # score_threshold=-1.0: Chroma can return negative relevance scores; version
+    # is already a HARD filter, so don't let a score cutoff drop valid results.
     docs = rag.retrieve(query, collection_name=COLLECTION, k=10,
-                        filters={"source_type": "issue"})
+                        score_threshold=-1.0, filters={"source_type": "issue"})
     out = [d for d in docs if _version_match(d, versions)]
     if status:
         out = [d for d in out if d.metadata.get("status") == status]
@@ -53,7 +55,7 @@ def search_issues(query: str, versions: list[str], status: str = None) -> list[d
 def search_features(query: str, versions: list[str]) -> list[dict]:
     """Find new/changed features scoped to the given versions. Version filter is hard."""
     docs = rag.retrieve(query, collection_name=COLLECTION, k=10,
-                        filters={"source_type": "guide"})
+                        score_threshold=-1.0, filters={"source_type": "guide"})
     out = [d for d in docs if _version_match(d, versions)]
     return [_cite(d) for d in out]
 
