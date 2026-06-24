@@ -8,7 +8,10 @@ Local RAG pipeline with two agents. No AWS needed to run this.
 |------|--------------|
 | `app/agents/rag.py` | Shared RAG layer — all agents read from here |
 | `app/agents/rfp_agent.py` | Agent 1: RFP & Discovery Prep |
-| `app/agents/competitive_intel_agent.py` | Agent 2: Competitive Intelligence Brief |
+| `app/agents/product_docs/baseline.py` | Agent 2: Document Q&A — **baseline** (fixed-chain) variant, the chosen impl |
+| `app/agents/product_docs/agentic.py` | Agent 2 — **agentic** variant (ReAct loop, plans its own retrieval); the comparison arm |
+| `app/agents/product_docs/tools.py` | Version-filtered retrieval tools — the **version hard-filter** (no cross-version fact mixing) |
+| `eval/product_docs_eval.py` | Baseline-vs-agentic eval (golden Q&A) — the "explore different agent designs" deliverable |
 | `app/main.py` | FastAPI backend (routes to agents) |
 | `app/streamlit_app.py` | Streamlit UI (the clickable demo) |
 | `scripts/setup_kb.py` | Builds the Chroma knowledge base from source_docs/ |
@@ -38,23 +41,34 @@ python scripts/setup_kb.py
 
 ## Adding knowledge documents
 
+Two separate ingestion paths — they don't share a directory or a script:
+
+**`source_docs/` + `python scripts/setup_kb.py`** — universal + RFP knowledge.
 Name your files with the right prefix so they go into the correct collection:
 
 | Filename prefix | Collection | Used by |
 |----------------|------------|---------|
 | `universal_*` | universal | All agents |
 | `rfp_*` | rfp_archive | RFP agent only |
-| `ci_*` | competitive_intel | CI agent only |
 | (no prefix) | universal | All agents |
 
-Examples:
 ```
 source_docs/
   universal_zyter_product_overview.txt   ← already included (placeholder)
   universal_zyter_battle_cards.pdf       ← add when received from Matt
   rfp_past_responses_2024.pdf            ← add when received from SharePoint
-  ci_competitor_notes.txt                ← add win/loss notes here
 ```
+
+**`data/synthetic/` + `python scripts/ingest_product_docs.py`** — Document Q&A
+Assistant knowledge (version-tagged release notes + the known-issues CSV). See that
+script's docstring for the expected file shape. This synthetic corpus is what ships
+in the repo.
+
+**`scripts/ingest_real_docs.py`** — ingests real product-documentation PDFs from a local
+`documentations/{v24.1,v24.2,...}/` folder into a separate `trucare_real` collection (version
+comes from the folder name). Real PDFs and the Chroma store are **gitignored** — only the
+synthetic data lives in the repo. The agent's collection is selectable via the
+`PRODUCT_DOCS_COLLECTION` env var (default `product_docs`).
 
 Re-run `python scripts/setup_kb.py` after adding new files. It skips already-indexed chunks.
 
@@ -80,8 +94,14 @@ Open http://localhost:8501 in your browser.
 # Test RFP agent
 python -m app.agents.rfp_agent
 
-# Test CI agent  
-python -m app.agents.competitive_intel_agent
+# Test Document Q&A Assistant (baseline variant)
+python -m app.agents.product_docs.baseline
+
+# Verify the agentic graph compiles (no API key needed)
+python -m app.agents.product_docs.agentic
+
+# Run the baseline-vs-agentic comparison (needs API keys + an ingested collection)
+python eval/product_docs_eval.py
 ```
 
 ## Architecture
@@ -109,5 +129,5 @@ When AWS sandbox is provisioned:
 - .env keys → AWS Secrets Manager
 - SQLite checkpointer → RDS PostgreSQL (for LangGraph V2)
 
-The agent logic (`rfp_agent.py`, `competitive_intel_agent.py`) does **not change** 
+The agent logic (`rfp_agent.py`, `product_docs/baseline.py`) does **not change** 
 between prototype and MVP. Only the infrastructure layer changes.

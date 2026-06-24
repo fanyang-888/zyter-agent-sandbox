@@ -11,9 +11,22 @@ never surface a v24 chunk. Chroma metadata can't hold lists, so ingestion stores
 `versions_csv` ("24.2,25.1") and we post-filter set-intersection here in code.
 """
 
+import os
+
 from app.agents import rag
 
-COLLECTION = "product_docs"
+# Which Chroma collection the tools read. Default = synthetic eval corpus.
+# Set PRODUCT_DOCS_COLLECTION=trucare_real to run against real TruCare PDFs.
+# Kept configurable so the synthetic comparison (baseline 7/7 vs agentic 5/7)
+# stays reproducible while the real-data run uses a separate collection.
+COLLECTION = os.getenv("PRODUCT_DOCS_COLLECTION", "product_docs")
+
+# Real release-notes/guide PDFs are all ingested as source_type="guide" (there is
+# no separate issue/row structure like the synthetic issues.csv). So on real data
+# a source_type="issue" filter returns nothing. REAL_DATA flips search_issues to
+# search the guide chunks instead, so a bug-status question still retrieves the
+# release-note prose that describes the fix.
+REAL_DATA = COLLECTION != "product_docs"
 
 
 def _version_match(doc, asked: list[str]) -> bool:
@@ -44,10 +57,14 @@ def search_issues(query: str, versions: list[str], status: str = None) -> list[d
     """
     # score_threshold=-1.0: Chroma can return negative relevance scores; version
     # is already a HARD filter, so don't let a score cutoff drop valid results.
+    # Real data has no source_type="issue" chunks (release notes describe fixes in
+    # prose), so on real data search the guide chunks instead and skip the
+    # non-existent status metadata — otherwise this tool always returns empty.
+    src_filter = {"source_type": "guide"} if REAL_DATA else {"source_type": "issue"}
     docs = rag.retrieve(query, collection_name=COLLECTION, k=10,
-                        score_threshold=-1.0, filters={"source_type": "issue"})
+                        score_threshold=-1.0, filters=src_filter)
     out = [d for d in docs if _version_match(d, versions)]
-    if status:
+    if status and not REAL_DATA:
         out = [d for d in out if d.metadata.get("status") == status]
     return [_cite(d) for d in out]
 

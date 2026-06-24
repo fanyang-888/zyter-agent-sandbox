@@ -47,6 +47,9 @@ Rules:
   version + source file).
 - If the tools don't return enough to answer, reply starting with "ABSTAIN:" and say
   what's missing. NEVER guess a version fact.
+- If the question is outside product documentation (pricing, licensing, contracts,
+  roadmap, support SLAs), reply starting with "ABSTAIN:" and redirect to the right team —
+  do NOT answer from general knowledge.
 - End with a sources block listing the cp_ids / files you used."""
 
 
@@ -150,8 +153,37 @@ def _final_text(msg) -> str:
     return "\n".join(parts)
 
 
+def _gathered_evidence(messages) -> str:
+    """All tool_result payloads accumulated across the ReAct loop, oldest→newest."""
+    blobs = []
+    for m in messages:
+        content = m.get("content")
+        if m.get("role") == "user" and isinstance(content, list):
+            for b in content:
+                if isinstance(b, dict) and b.get("type") == "tool_result":
+                    blobs.append(b.get("content", ""))
+    return "\n".join(blobs)
+
+
 def node_compose(state: PDState) -> dict:
     text = _final_text(state["messages"][-1])
+    # If the ReAct loop was cut off at MAX_TOOL_HOPS, the last assistant turn is an
+    # unanswered tool-call request with no prose → empty answer. Force ONE tool-free
+    # synthesis from everything already gathered so the agent never returns nothing.
+    # (Found on real data: a noisy "what's new in 25.2" lookup spiralled to the hop
+    # ceiling and returned empty, while the baseline answered it in one shot.)
+    if not text.strip():
+        evidence = _gathered_evidence(state["messages"])
+        q = state.get("rewritten_question") or state["question"]
+        resp = client.messages.create(
+            model=MODEL, max_tokens=2048, system=SYSTEM,
+            messages=[{"role": "user", "content": (
+                f"Question: {q}\n\nEvidence gathered from the documentation tools:\n"
+                f"{evidence[:8000]}\n\nGive your FINAL answer now from this evidence, "
+                "citing versions/sources. If it is insufficient, reply starting with "
+                "'ABSTAIN:'.")}],
+        )
+        text = _final_text({"content": resp.content})
     abstained = text.strip().upper().startswith("ABSTAIN")
     if abstained:
         with open(UNANSWERABLE_LOG, "a") as f:
