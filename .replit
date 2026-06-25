@@ -1,0 +1,26 @@
+# Replit config — Zyter Q&A Assistant demo (SYNTHETIC data only)
+run = "bash scripts/replit_boot.sh"
+entrypoint = "app/streamlit_app.py"
+modules = ["python-3.11"]
+
+[nix]
+channel = "stable-24_05"
+
+[env]
+PYTHONPATH = "."
+
+# Streamlit's port (8501) is the public one; map it to external 80 for the webview.
+[[ports]]
+localPort = 8501
+externalPort = 80
+
+# uvicorn backend stays internal — do NOT expose 8000.
+[[ports]]
+localPort = 8000
+externalPort = 3000
+
+# Published deployment (the shareable link) runs the same boot script.
+# Reserved VM = always-on, simplest for a multi-process (uvicorn + streamlit) demo.
+[deployment]
+run = ["bash", "scripts/replit_boot.sh"]
+deploymentTarget = "gce"

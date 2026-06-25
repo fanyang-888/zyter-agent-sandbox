@@ -1,0 +1,8 @@
+# Streamlit server config for the Replit (public, embedded webview) demo.
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
